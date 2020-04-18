@@ -1,0 +1,154 @@
+Sub principal()
+    Dim matriz(), matriz_final() As Variant
+' para activar los libros virtuales
+    Set HojaDestino = Workbooks(ThisWorkbook.Name).Worksheets("Hoja1")
+    HojaDestino.Activate
+    Worksheets.Add.Name = "Carga"
+'Mandamos la ruta del archivo
+    ruta = "C:\Users\Alex\Desktop\datos txt\NuevoSintesis\Sintesis Nuevo\prn2D02.tmp.txt"
+    importar_datos (ruta)
+'eliminar alertas
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+'Corregimos y definimos las dimensiones de la Matriz
+ Rows(1).EntireRow.Delete
+        fila = 1
+        Do While Cells(fila, 1).Value <> ""
+                If InStr(1, Cells(fila, 1).Value, "------") > 0 Then
+                        Rows(fila).EntireRow.Delete
+                        fila = fila - 1
+		    ElseIf InStr(1, Cells(fila, 1).Value, "     ") > 0 Then
+                        Rows(fila).EntireRow.Delete
+                        fila = fila - 1			
+                    ElseIf InStr(1, Cells(fila, 1).Value, "INTRA PLAT") > 0 Then
+                    'SUPER MANUAL ESPERO REFACTORIZAR
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        fila = fila - 1
+                    ElseIf InStr(1, Cells(fila, 1).Value, "@PB") > 0 Then
+                    'SUPER MANUAL ESPERO REFACTORIZAR
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        Rows(fila).EntireRow.Delete
+                        fila = fila - 1
+                    ElseIf Cells(fila, 1).Value = "SERVICIO" Then
+                        Rows(fila).EntireRow.Delete
+                        fila = fila - 1
+                End If
+                    fila = fila + 1
+        Loop
+        If Cells(fila - 1, 2).Value = "" Then
+            Rows(fila - 1).EntireRow.Delete
+        End If
+        'SUPER MANUAL ESPERO REFACTORIZAR
+        Columns("B").EntireColumn.Delete
+        Columns("B").EntireColumn.Delete
+        Columns("B").EntireColumn.Delete
+        Columns("B").EntireColumn.Delete
+' Dimensiones de la matriz
+        filas = ActiveSheet.UsedRange.SpecialCells(xlCellTypeLastCell).Row
+        columnas = ActiveSheet.UsedRange.SpecialCells(xlCellTypeLastCell).Column
+    ReDim matriz(filas, columnas)
+' Cargamos datos a la matriz
+        For i = 1 To filas
+            For j = 1 To columnas
+                matriz(i, j) = Cells(i, j).Value
+            Next j
+        Next i
+' activamos hoja destino
+    Sheets("Carga").Delete
+    Set HojaDestino = Workbooks(ThisWorkbook.Name).Worksheets("Hoja1")
+    HojaDestino.Activate
+' Buscamos el DPTO
+    servicio = 0
+    agencia = 1
+    ciudad = 1
+    departamento = 1
+    serv = 1
+    compensa_filas = 0
+    
+'MAGICO NO TOCA POR NADA DEL MUNDO
+        For i = 1 To filas
+            j = 1
+                If InStr(1, matriz(i, j), "TOTAL SERVICIO") > 0 Then
+                    Do While serv <= servicio
+                        Cells(serv, 4).Value = matriz(i, j)
+                        serv = serv + 1
+                    Loop
+                        serv = servicio
+                        compensa_filas = compensa_filas + 1
+
+                ElseIf InStr(1, matriz(i, j), "TOTAL AGENCIA") > 0 Then
+                    Do While agencia <= servicio
+                        Cells(agencia, 3).Value = matriz(i, j)
+                        agencia = agencia + 1
+                    Loop
+                        serv = servicio
+                        compensa_filas = compensa_filas + 1
+                    
+                ElseIf InStr(1, matriz(i, j), "TOTAL CIUDAD") > 0 Then
+                    Do While ciudad <= servicio
+                        Cells(ciudad, 2).Value = matriz(i, j)
+                        ciudad = ciudad + 1
+                    Loop
+                        serv = servicio
+                        compensa_filas = compensa_filas + 1
+                ElseIf InStr(1, matriz(i, j), "TOTAL DPTO") > 0 Then
+                    Do While departamento <= servicio
+                        Cells(departamento, 1).Value = matriz(i, j)
+                        departamento = departamento + 1
+                    Loop
+                        serv = servicio
+                        compensa_filas = compensa_filas + 1
+                Else
+                    Cells(i - compensa_filas, 5).Value = matriz(i, j)
+                    Cells(i - compensa_filas, 6).Value = matriz(i, j + 1)
+                    Cells(i - compensa_filas, 7).Value = matriz(i, j + 2)
+                    servicio = servicio + 1
+                End If
+        Next i
+
+    
+End Sub
+
+
+Sub importar_datos(ruta)
+    tipo = "TEXT"
+    ruta_completa = tipo & ";" & ruta
+' Esta parte se utilizo para jalar el txt y darle forma porq el archivo no tiene separador ";"
+    With ActiveSheet.QueryTables.Add(Connection:= _
+        ruta_completa _
+        , Destination:=Range("$A$1"))
+        .FieldNames = True
+        .RowNumbers = False
+        .FillAdjacentFormulas = False
+        .PreserveFormatting = True
+        .RefreshOnFileOpen = False
+        .RefreshStyle = xlInsertDeleteCells
+        .SavePassword = False
+        .SaveData = True
+        .AdjustColumnWidth = True
+        .RefreshPeriod = 0
+        .TextFilePromptOnRefresh = False
+        .TextFilePlatform = xlMSDOS
+        .TextFileStartRow = 1
+        .TextFileParseType = xlFixedWidth
+        .TextFileTextQualifier = xlTextQualifierDoubleQuote
+        .TextFileConsecutiveDelimiter = False
+        .TextFileTabDelimiter = True
+        .TextFileSemicolonDelimiter = False
+        .TextFileCommaDelimiter = False
+        .TextFileSpaceDelimiter = False
+        .TextFileColumnDataTypes = Array(1, 1, 1, 1, 1, 1, 1)
+        .TextFileFixedColumnWidths = Array(41, 10, 15, 11, 13, 11)
+        .TextFileTrailingMinusNumbers = True
+        .Refresh BackgroundQuery = False
+    End With
+'    ActiveWindow.SmallScroll Down = -18
+End Sub
